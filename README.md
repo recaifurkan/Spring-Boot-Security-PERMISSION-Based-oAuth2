@@ -237,6 +237,8 @@ This is a reference implementation for educational purposes. For production depl
 
 7. **Rate Limiting**: Implement rate limiting to prevent brute force attacks.
 
+8. **CSRF Protection**: This implementation disables CSRF protection as it's designed for stateless JWT-based authentication where tokens are sent via Authorization headers (not cookies). JWT tokens are not vulnerable to CSRF attacks. If you implement session-based authentication or use cookies, enable CSRF protection.
+
 ## License
 
 This is a reference implementation for educational purposes.

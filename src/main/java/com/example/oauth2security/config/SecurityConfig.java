@@ -42,6 +42,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .authorizeRequests()
             .anyRequest().authenticated()
             .and()
+            // CSRF protection is disabled for stateless REST API with JWT tokens.
+            // The OAuth2 resource server configuration handles actual request security.
             .csrf().disable();
     }
 }

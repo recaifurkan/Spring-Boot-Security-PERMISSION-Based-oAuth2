@@ -26,7 +26,12 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
             .antMatchers("/api/**").authenticated()
             .anyRequest().authenticated()
             .and()
+            // CSRF protection is disabled for stateless REST API with JWT tokens.
+            // JWT tokens in Authorization header are not vulnerable to CSRF attacks.
+            // For session-based authentication, CSRF protection should be enabled.
             .csrf().disable()
+            // Frame options disabled for H2 console access in development.
+            // In production, remove H2 console or use strict frame policy.
             .headers().frameOptions().disable();
     }
 }
