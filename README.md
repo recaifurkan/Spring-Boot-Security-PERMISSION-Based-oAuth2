@@ -28,8 +28,8 @@ A high-level swimlane of the auth dance is captured in `docs/Role-Based-oAuth.gi
 ## Getting Started
 ```bash
 # from any folder
-git clone https://github.com/<your-org>/Spring-Boot-Security-Role-Based-oAuth2.git
-cd Spring-Boot-Security-Role-Based-oAuth2
+git clone https://github.com/recaifurkan/Spring-Boot-Security-PERMISSION-Based-oAuth2
+cd Spring-Boot-Security-PERMISSION-Based-oAuth2
 mvn clean spring-boot:run
 ```
 The app starts on port `8090` (see `src/main/resources/application.properties`). Schema and seed data are loaded automatically from `schema.sql` and `data.sql`.
