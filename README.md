@@ -219,6 +219,24 @@ Endpoints use Spring Security expressions:
 - Lombok
 - Maven
 
+## Notes for Production Use
+
+This is a reference implementation for educational purposes. For production deployment, consider:
+
+1. **Security Configuration**: The implementation uses `WebSecurityConfigurerAdapter` which is deprecated in Spring Security 5.7+. For new projects, use `SecurityFilterChain` bean configuration instead.
+
+2. **JWT Signing Key**: Move the JWT signing key to environment variables or secure configuration management (e.g., Spring Cloud Config, HashiCorp Vault).
+
+3. **Account Status**: Implement actual account expiration, locking, and credential expiration logic based on business requirements.
+
+4. **Database**: Replace H2 with a production-grade database (PostgreSQL, MySQL, etc.).
+
+5. **Password Policies**: Implement password strength requirements and rotation policies.
+
+6. **Logging**: Add comprehensive audit logging for security events.
+
+7. **Rate Limiting**: Implement rate limiting to prevent brute force attacks.
+
 ## License
 
 This is a reference implementation for educational purposes.

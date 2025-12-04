@@ -46,6 +46,10 @@ public class CustomUserDetails implements UserDetails {
         return user.getUsername();
     }
 
+    // NOTE: These methods return hard-coded 'true' for demo purposes.
+    // In production, implement actual logic based on user entity properties
+    // to handle account expiration, locking, and credential expiration.
+    
     @Override
     public boolean isAccountNonExpired() {
         return true;
