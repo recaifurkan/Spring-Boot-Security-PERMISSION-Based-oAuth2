@@ -13,7 +13,6 @@ A helper script (`request.sh`) mimics the full password-grant flow from the CLI.
 - JDK 17+
 - Maven 3.9+
 - `curl` and `jq` (used by `request.sh`)
-- (Optional) Docker Desktop for `docker-compose` runs
 
 ## Run the services
 Run each Spring Boot app from separate terminals so both ports stay alive.
@@ -28,13 +27,6 @@ mvn spring-boot:run
 # Terminal 2
 cd resource-server
 mvn spring-boot:run
-```
-
-Prefer containers? Boot both services with one command.
-
-```bash
-cd Spring-Boot-Security-PERMISSION-Based-oAuth2
-docker-compose up --build
 ```
 
 ## Token + API flow
@@ -84,4 +76,3 @@ mvn -pl resource-server -Dtest=ProductFlowIT test
 ## Next steps
 1. Add more scopes (`product.write`, etc.) and guard extra endpoints in `ProductController`.
 2. Externalize clients/users to a database instead of in-memory stores.
-3. Package both services into containers and publish the images for deployment environments.
