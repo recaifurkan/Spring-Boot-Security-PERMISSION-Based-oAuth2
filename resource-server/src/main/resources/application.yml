@@ -1,0 +1,16 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: resource-server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${AUTH_JWKS_URI:http://localhost:9000/oauth2/jwks}
+
+logging:
+  level:
+    org.springframework.security: INFO
+
