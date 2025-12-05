@@ -17,13 +17,10 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -37,13 +34,10 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -52,7 +46,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Refr
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.StringUtils;
 
@@ -60,7 +53,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -95,46 +87,6 @@ public class AuthorizationServerConfig {
 
         // Coppose generators (JWT + Refresh)
         return new DelegatingOAuth2TokenGenerator(jwtGenerator, refreshTokenGenerator);
-    }
-
-
-    // Registered client — password grant allowed, client_credentials allowed
-    @Bean
-    public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
-        RegisteredClient registeredClient = RegisteredClient
-                .withId(UUID.randomUUID().toString())
-                .clientId("my-client")
-                .clientSecret(encoder.encode("my-secret"))
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD) // custom handled
-                .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1))
-                        .reuseRefreshTokens(false)
-                        .build())
-                .clientSettings(ClientSettings.builder()
-                        .requireAuthorizationConsent(false)
-                        .build())
-                .build();
-
-        return new InMemoryRegisteredClientRepository(registeredClient);
-    }
-
-    // In-memory user details (örnek). Scope'lar SCOPE_ ön ekiyle authorities olarak verildi.
-
-    //@Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails ahmet = User.withUsername("ahmet")
-                .password(encoder.encode("12345"))
-                .authorities("ROLE_USER", "SCOPE_product.read", "SCOPE_product.write")
-                .build();
-
-        UserDetails mehmet = User.withUsername("mehmet")
-                .password(encoder.encode("12345"))
-                .authorities("ROLE_USER") // sadece read
-                .build();
-
-        return new InMemoryUserDetailsManager(ahmet, mehmet);
     }
 
 
@@ -176,8 +128,7 @@ public class AuthorizationServerConfig {
     @Bean
     public AuthenticationManager userAuthenticationManager(UserDetailsService userDetailsService,
                                                            PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider dao = new DaoAuthenticationProvider();
-        dao.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider dao = new DaoAuthenticationProvider(userDetailsService);
         dao.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(dao);
     }
@@ -234,7 +185,7 @@ public class AuthorizationServerConfig {
 
         // before authentication
         public PasswordGrantAuthenticationToken(Authentication clientPrincipal, String username, String password) {
-            super(null);
+            super(clientPrincipal.getAuthorities());
             this.clientPrincipal = clientPrincipal;
             this.username = username;
             this.password = password;
@@ -271,8 +222,8 @@ public class AuthorizationServerConfig {
 
             Authentication clientPrincipal = (Authentication) request.getUserPrincipal();
 
-            String username = request.getParameter(OAuth2ParameterNames.USERNAME);
-            String password = request.getParameter(OAuth2ParameterNames.PASSWORD);
+            String username = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+            String password = request.getParameter(OAuth2ParameterNames.CLIENT_SECRET);
 
             if (!StringUtils.hasText(username) || !StringUtils.hasText(password)) {
                 return null; // let framework handle missing param errors
@@ -329,9 +280,7 @@ public class AuthorizationServerConfig {
                 throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
             }
 
-            if (!registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.PASSWORD)) {
-                throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
-            }
+
 
             // Authenticate the resource owner (username/password)
             UsernamePasswordAuthenticationToken userToken =
@@ -364,7 +313,7 @@ public class AuthorizationServerConfig {
                     .principal(userAuth)
                     .authorizationServerContext(AuthorizationServerContextHolder.getContext())
                     .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-                    .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .authorizedScopes(authorizedScopes);
 
             OAuth2TokenContext tokenContext = tokenContextBuilder.build();
@@ -386,7 +335,7 @@ public class AuthorizationServerConfig {
             // Build authorization and persist
             OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
                     .principalName(userAuth.getName())
-                    .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .token(accessToken, metadata -> {
                     })
                     .build();

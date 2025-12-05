@@ -16,11 +16,9 @@ class ProductFlowIT {
     private final RestClient restClient = RestClient.builder().build();
 
     @Test
-    void shouldFetchProductsWithPasswordGrantToken() {
+    void shouldFetchProducts() {
         String formBody = UriComponentsBuilder.newInstance()
-                .queryParam("grant_type", "password")
-                .queryParam("username", "ahmet")
-                .queryParam("password", "12345")
+                .queryParam("grant_type", "client_credentials")
                 .queryParam("scope", "product.read")
                 .build()
                 .getQuery();
@@ -28,7 +26,7 @@ class ProductFlowIT {
         Map<?, ?> tokenResponse = restClient.post()
                 .uri("http://localhost:9000/oauth2/token")
                 .headers(headers -> {
-                    headers.setBasicAuth("my-client", "my-secret");
+                    headers.setBasicAuth("ahmet", "12345");
                     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
                 })
                 .body(formBody)
@@ -51,17 +49,15 @@ class ProductFlowIT {
     @Test
     void shouldNotAuthorizedWithScopeNotPrivilege() {
         String formBody = UriComponentsBuilder.newInstance()
-                .queryParam("grant_type", "password")
-                .queryParam("username", "mehmet")
-                .queryParam("password", "12345")
-                .queryParam("scope", "product.read")
+                .queryParam("grant_type", "client_credentials")
+                .queryParam("scope", "ROLE_USER")
                 .build()
                 .getQuery();
 
         Map<?, ?> tokenResponse = restClient.post()
                 .uri("http://localhost:9000/oauth2/token")
                 .headers(headers -> {
-                    headers.setBasicAuth("my-client", "my-secret");
+                    headers.setBasicAuth("mehmet", "12345");
                     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
                 })
                 .body(formBody)

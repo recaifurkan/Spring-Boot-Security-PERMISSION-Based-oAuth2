@@ -19,6 +19,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/products").hasAuthority("SCOPE_product.read")
                 .anyRequest().authenticated()
         );
 

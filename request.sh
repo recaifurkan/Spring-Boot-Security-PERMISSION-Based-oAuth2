@@ -2,12 +2,20 @@
 
 echo "===> Access token alınıyor..."
 
+
+
+
+#curl -s -X POST "http://localhost:9000/oauth2/token" \
+#  -H "Content-Type: application/x-www-form-urlencoded" \
+#  -d "grant_type=client_credentials" \
+#  -d "scope=SCOPE_product.read" \
+#  -d "client_id=ahmet" \
+#  -d "client_secret=12345"
+
 TOKEN=$(curl -s -X POST "http://localhost:9000/oauth2/token" \
-  -u "my-client:my-secret" \
+  -u "ahmet:12345" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=ahmet" \
-  -d "password=12345" \
+  -d "grant_type=client_credentials" \
   -d "scope=product.read" \
   | jq -r '.access_token')
 

@@ -1,6 +1,6 @@
 # Spring Authorization & Resource Server Demo
 
-A dual Spring Boot 3.3 project that demonstrates how to issue and validate OAuth 2.1 access tokens with fine-grained, scope-based permissions. The repo contains:
+A dual Spring Boot 4.0.0 project that demonstrates how to issue and validate OAuth 2 access tokens with fine-grained, scope-based permissions. The repo contains:
 
 | Module | Port | Purpose |
 | --- | --- | --- |
@@ -31,7 +31,6 @@ mvn spring-boot:run
 
 ## Token + API flow
 Client and user fixtures are in-memory:
-- OAuth client: `my-client` / `my-secret`
 - Resource owner: `ahmet` / `12345`
 - Required scope: `product.read`
 
@@ -44,15 +43,13 @@ bash request.sh
 Manual equivalent:
 
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:9000/oauth2/token \
-  -u my-client:my-secret \
+TOKEN=$(curl -s -X POST "http://localhost:9000/oauth2/token" \
+  -u "ahmet:12345" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=ahmet" \
-  -d "password=12345" \
+  -d "grant_type=client_credentials" \
   -d "scope=product.read" | jq -r '.access_token')
 
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/products
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/products -v
 ```
 
 If the scope is missing or insufficient, the resource server responds with `403 Forbidden` and the `WWW-Authenticate` header explains the missing privilege (`error="insufficient_scope"`).
